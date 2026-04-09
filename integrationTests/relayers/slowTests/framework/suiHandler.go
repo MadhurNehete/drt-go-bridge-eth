@@ -93,6 +93,13 @@ func (handler *SuiHandler) DeployContracts(ctx context.Context) {
 	xmnSrc := filepath.Join(docsAbsPath, "stablecoin-sui", "packages", "xmn")
 	bridgeSrc := filepath.Join(docsAbsPath, "mx-bridge-sc-sui")
 
+	for _, dir := range []string{suiExtDir, lockedTokenSrc, treasurySrc, xmnSrc, bridgeSrc} {
+		if _, statErr := os.Stat(dir); os.IsNotExist(statErr) {
+			handler.Skipf("skipping Sui contract deployment: required source directory not found: %s", dir)
+			return
+		}
+	}
+
 	// Step 1: Deploy sui_extensions — no external package deps.
 	// After publishing, set published-at in sui_extensions' own Move.toml so
 	// downstream packages can reference it as a local dep without triggering
