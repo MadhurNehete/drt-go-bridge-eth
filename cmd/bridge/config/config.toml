@@ -1,0 +1,194 @@
+[Sui]
+    Chain = "Sui"
+    Enabled = true
+    NetworkAddress = "https://fullnode.testnet.sui.io:443" # a network address
+    PackageId = "0x0f16411218d3f5e6ee73be6d688189f5dda4072487219a71514d95ad3510fadd"
+    BridgeObjectId = "0x48a61c8bc8d9ebc5410c22073e45d728604f0c4287cd7076ddf21b1635de6029"
+    BridgeObjectInitialSharedVersion = 813763978
+    SafeObjectId = "0x95d375bce1150681b7b12a2142b9f5564963da6a3e2dbb304c3c5e15f3ba24a1"
+    SafeObjectInitialSharedVersion = 813763977
+    # TreasuryObjectId: the shared locked-token treasury object (used by bridge::execute_transfer
+    # for normal coins and locked tokens that go through the default bridge module).
+    TreasuryObjectId = "0x1bc69f6996c278f0ea00c015352335079c689dbb4a3cbc3348af5077a1eea375"
+    TreasuryObjectInitialSharedVersion = 764107789
+    PrivateKeyFile = "keys/sui.sk" # the path to the file containing the relayer eth private key
+    IntervalToWaitForTransferInSeconds = 50 #50 seconds
+    MaxRetriesOnQuorumReached = 3
+    ClientAvailabilityAllowDelta = 10
+    # TokenAdapterConfigs routes specific coin types to a custom Move adapter module
+    # instead of the default bridge::execute_transfer.
+    # Use this for mint-burn adapter tokens that have their own on-chain module.
+    # Normal coins and locked tokens do NOT need an entry here — they use bridge::execute_transfer
+    # with the TreasuryObjectId above.
+    #
+    # Example: one mint-burn adapter token
+    [[Sui.TokenAdapterConfigs]]
+        # CoinType: fully-qualified Move coin type, e.g. "<package>::<module>::<COIN>"
+        CoinType = "0xcd9dffc1d0cfe1176123fdf62b7769ecc4bfb2b312d868ac1613649801acddf5::xmn::XMN"
+        # AdapterModule: the Move module inside PackageId that implements execute_transfer for this coin
+        AdapterModule = "xmn_mint_cap_adapter"
+        # AdapterObjects: shared objects appended after is_batch_complete in the adapter's execute_transfer call.
+        # List them in the exact order the Move function expects.
+        [[Sui.TokenAdapterConfigs.AdapterObjects]]
+          ObjectId = "0x8d02172b84df200599e0ed4fb89eeb325af197f5d50be28ab3ee9c79b9706ec1"   # XmnTreasury<T> shared object
+          InitialSharedVersion = 764107793
+          Mutable = true
+          [[Sui.TokenAdapterConfigs.AdapterObjects]]
+              ObjectId = "0x0000000000000000000000000000000000000000000000000000000000000403"  # DenyList
+              InitialSharedVersion = 22257037
+              Mutable = false
+          [[Sui.TokenAdapterConfigs.AdapterObjects]]
+              ObjectId = "0x0000000000000000000000000000000000000000000000000000000000000006"  # Clock
+              InitialSharedVersion = 1
+              Mutable = false
+
+[DharitrI]
+    NetworkAddress = "https://devnet-gateway.dharitri.com" # the network address
+    MultisigContractAddress = "drt1qqqqqqqqqqqqqpgq9ext3ys02vm534k4dkykp9y8sraza0uhpqqq37eyzh" # the dharitri address for the bridge contract
+    SafeContractAddress = "drt1qqqqqqqqqqqqqpgq70egmrllnh9r05kcxqtfaaj0dukewu2npqqqtnlke9" # the dharitri address for the safe contract
+    PrivateKeyFile = "keys/dharitri.pem" # the path to the pem file containing the relayer dharitri wallet
+    IntervalToResendTxsInSeconds = 60 # the time in seconds between nonce reads
+    MaxRetriesOnQuorumReached = 3
+    MaxRetriesOnWasTransferProposed = 3
+    ClientAvailabilityAllowDelta = 10
+    [DharitrI.Proxy]
+        CacherExpirationSeconds = 600 # the caching time in seconds
+
+        # valid options for ProxyRestAPIEntityType are "observer" and "proxy". Any other value will trigger an error.
+        # "observer" is useful when querying an observer, directly and "proxy" is useful when querying a squad's proxy (gateway)
+        RestAPIEntityType = "proxy"
+        FinalityCheck = true
+        MaxNoncesDelta = 7 # the number of maximum blocks allowed to be "in front" of what the metachain has notarized
+    [DharitrI.GasMap]
+        Sign = 8000000
+        ProposeTransferBase = 11000000
+        ProposeTransferForEach = 5500000
+        ProposeStatusBase = 10000000
+        ProposeStatusForEach = 7000000
+        PerformActionBase = 40000000
+        PerformActionForEach = 5500000
+        ScCallPerByte = 100000 # 1500 tx data field + the rest for the actual storage in the contract
+        ScCallPerformForEach = 10000000
+
+[P2P]
+     Port = "10011"
+    InitialPeerList = ["/ip4/127.0.0.1/tcp/10000/p2p/16Uiu2HAmN2uSDYsrLUQzYY65qLjB5YwsnLYNdLSkPA4X64QeiAoa"]
+    ProtocolID = "/devnet/sui/sui-testnet"
+    [P2P.Transports]
+        QUICAddress = "" # optional QUIC address. If this transport should be activated, should be in this format: /ip4/0.0.0.0/udp/%d/quic-v1
+        WebSocketAddress = "" # optional WebSocket address. If this transport should be activated, should be in this format: /ip4/0.0.0.0/tcp/%d/ws
+        WebTransportAddress = "" # optional WebTransport address. If this transport should be activated, should be in this format: /ip4/0.0.0.0/udp/%d/quic-v1/webtransport
+        [P2P.Transports.TCP]
+            ListenAddress = "/ip4/0.0.0.0/tcp/%d" # TCP listen address
+            PreventPortReuse = false
+        [P2P.ResourceLimiter]
+            Type = "default autoscale" #available options "default autoscale", "infinite", "default with manual scale".
+            ManualSystemMemoryInMB = 0 # not taken into account if the type is not "default with manual scale"
+            ManualMaximumFD = 0 # not taken into account if the type is not "default with manual scale"
+    [P2P.AntifloodConfig]
+        Enabled = true
+        NumConcurrentResolverJobs = 50
+        [P2P.AntifloodConfig.FastReacting]
+            IntervalInSeconds = 1
+            ReservedPercent   = 20.0
+            [P2P.AntifloodConfig.FastReacting.PeerMaxInput]
+                BaseMessagesPerInterval  = 10
+                TotalSizePerInterval = 1048576 #1MB/s
+                [P2P.AntifloodConfig.FastReacting.PeerMaxInput.IncreaseFactor]
+                    Threshold = 10 #if consensus size will exceed this value, then
+                    Factor = 1.0   #increase the base value with [factor*consensus size]
+            [P2P.AntifloodConfig.FastReacting.BlackList]
+                ThresholdNumMessagesPerInterval = 70
+                ThresholdSizePerInterval = 2097154 #2MB/s
+                NumFloodingRounds = 10
+                PeerBanDurationInSeconds = 300
+
+        [P2P.AntifloodConfig.SlowReacting]
+            IntervalInSeconds = 30
+            ReservedPercent   = 20.0
+            [P2P.AntifloodConfig.SlowReacting.PeerMaxInput]
+                BaseMessagesPerInterval = 400
+                TotalSizePerInterval = 10485760 #10MB/interval
+                [P2P.AntifloodConfig.SlowReacting.PeerMaxInput.IncreaseFactor]
+                    Threshold = 10 #if consensus size will exceed this value, then
+                    Factor = 0.0   #increase the base value with [factor*consensus size]
+            [P2P.AntifloodConfig.SlowReacting.BlackList]
+                ThresholdNumMessagesPerInterval = 800
+                ThresholdSizePerInterval = 20971540 #20MB/interval
+                NumFloodingRounds = 2
+                PeerBanDurationInSeconds = 3600
+
+        [P2P.AntifloodConfig.OutOfSpecs]
+            IntervalInSeconds = 1
+            ReservedPercent   = 0.0
+            [P2P.AntifloodConfig.OutOfSpecs.PeerMaxInput]
+                BaseMessagesPerInterval = 140
+                TotalSizePerInterval = 4194304 #4MB/s
+                [P2P.AntifloodConfig.OutOfSpecs.PeerMaxInput.IncreaseFactor]
+                    Threshold = 0 #if consensus size will exceed this value, then
+                    Factor = 0.0     #increase the base value with [factor*consensus size]
+            [P2P.AntifloodConfig.OutOfSpecs.BlackList]
+                ThresholdNumMessagesPerInterval = 200
+                ThresholdSizePerInterval = 6291456 #6MB/s
+                NumFloodingRounds = 2
+                PeerBanDurationInSeconds = 3600
+
+        [P2P.AntifloodConfig.PeerMaxOutput]
+            BaseMessagesPerInterval  = 5
+            TotalSizePerInterval     = 524288 #512KB/s
+
+        [P2P.AntifloodConfig.Cache]
+            Name = "Antiflood"
+            Capacity = 7000
+            Type = "LRU"
+        [P2P.AntifloodConfig.Topic]
+            DefaultMaxMessagesPerSec = 300 # default number of messages per interval for a topic
+            MaxMessages = [{ Topic = "SuiToDharitrI_join", NumMessagesPerSec = 100 },
+                           { Topic = "SuiToDharitrI_sign", NumMessagesPerSec = 100 }]
+
+[Relayer]
+    [Relayer.Marshalizer]
+        Type = "gogo protobuf"
+        SizeCheckDelta = 10
+    [Relayer.RoleProvider]
+        PollingIntervalInMillis = 60000 # 1 minute
+    [Relayer.StatusMetricsStorage]
+        [Relayer.StatusMetricsStorage.Cache]
+            Name = "StatusMetricsStorage"
+            Capacity = 1000
+            Type = "LRU"
+        [Relayer.StatusMetricsStorage.DB]
+            FilePath = "StatusMetricsStorageDB"
+            Type = "LvlDBSerial"
+            BatchDelaySeconds = 2
+            MaxBatchSize = 100
+            MaxOpenFiles = 10
+
+[StateMachine]
+    [StateMachine.SuiToDharitrI]
+        StepDurationInMillis = 12000 #12 seconds
+        IntervalForLeaderInSeconds = 120 #2 minutes
+
+    [StateMachine.DharitrIToSui]
+        StepDurationInMillis = 12000 #12 seconds
+        IntervalForLeaderInSeconds = 120 #2 minutes
+
+[Logs]
+    LogFileLifeSpanInSec = 86400 # 24h
+    LogFileLifeSpanInMB = 1024 # 1GB
+
+[WebAntiflood]
+    Enabled = true
+    [WebAntiflood.WebServer]
+            # SimultaneousRequests represents the number of concurrent requests accepted by the web server
+            # this is a global throttler that acts on all http connections regardless of the originating source
+            SimultaneousRequests = 100
+            # SameSourceRequests defines how many requests are allowed from the same source in the specified
+            # time frame (SameSourceResetIntervalInSec)
+            SameSourceRequests = 10000
+            # SameSourceResetIntervalInSec time frame between counter reset, in seconds
+            SameSourceResetIntervalInSec = 1
+
+[PeersRatingConfig]
+    TopRatedCacheCapacity = 5000
+    BadRatedCacheCapacity = 5000

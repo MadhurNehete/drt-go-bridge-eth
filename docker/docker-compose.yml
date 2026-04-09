@@ -1,0 +1,17 @@
+services:
+ chain-simulator:
+  image: terradharitri/chainsimulator:dev
+  ports:
+    - 8085:8085
+  volumes:
+    - "../scripts:/docker/scripts"
+    - "./config/nodeOverrideDefault.toml:/terradharitri/config/nodeOverrideDefault.toml"
+  entrypoint: "./chainsimulator -log-level *:INFO"
+
+ sui:
+  image: mysten/sui-tools:testnet
+  ports:
+    - "9000:9000"  # Sui RPC port
+    - "9123:9123"  # Sui faucet port
+  command: >
+   sui start --with-faucet --force-regenesis
