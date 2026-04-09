@@ -125,7 +125,7 @@ func CreateSuiDrtBridgeComponentsConfig(index int, workingDir string) config.Con
 			SafeObjectInitialSharedVersion:     1,
 			BridgeObjectId:                     "bridgeObjectId",
 			BridgeObjectInitialSharedVersion:   1,
-			PrivateKeyFile:                     fmt.Sprintf("testdata/sui%d.seed", index),
+			PrivateKeyFile:                     fmt.Sprintf("testdata/sui%d.sk", index),
 			MaxRetriesOnQuorumReached:          1,
 			IntervalToWaitForTransferInSeconds: 1,
 			ClientAvailabilityAllowDelta:       5,

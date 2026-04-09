@@ -23,6 +23,9 @@
 *.log
 # prevent accidental commit of key files
 *.pem
+!executors/dharitri/module/testdata/*.pem
+!factory/testdata/*.pem
+!integrationTests/relayers/testdata/*.pem
 
 mytestnet/**
 
